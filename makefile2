@@ -1,9 +1,7 @@
 # FOO="$(python test.py)"
 CC := g++
-NVCC := nvcc
+NVCC := $(shell command -v nvcc 2> /dev/null)
 BUILDDIR := build
-SRCDIR := src
-TARGET := bin/kernel_example.so
 TF_CFLAGS := $(shell python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_compile_flags()))') 
 TF_LFLAGS := $(shell python -c 'import tensorflow as tf; print(" ".join(tf.sysconfig.get_link_flags()))') 
 INC := -I include 
@@ -11,16 +9,16 @@ LIB := -L /usr/local/cuda-9.0/lib64/
 
 
 all:
-	# $(CC) -std=c++11 -shared src/zero_out.cc -o bin/zero_out.so -fPIC $(TF_CFLAGS) $(TF_LFLAGS) -O2
-	# nvcc -std=c++11 -c -o $cuda_op_kernel.cu.o cuda_op_kernel.cu.cc \
-	  # ${TF_CFLAGS[@]} -D GOOGLE_CUDA=1 -x cu -Xcompiler -fPIC
-	# g++ -std=c++11 -shared -o cuda_op_kernel.so cuda_op_kernel.cc \
-	  # cuda_op_kernel.cu.o ${TF_CFLAGS[@]} -fPIC -lcudart ${TF_LFLAGS[@]}
-	# $(NVCC) -std=c++11 -c -o $(BUILDDIR)/kernel_example.cu.o $(SRCDIR)/kernel_example.cu.cc \
-		# $(TF_CFLAGS) $(INC) $(LIB) -D GOOGLE_CUDA=1 -x cu -Xcompiler -fPIC
+ifndef NVCC
+	@echo "nvcc not found. Skipping gpu build"
+	$(CC) -std=c++11 -shared -o lib/zero_out.so zero_out/zero_out.cc \
+		-fPIC $(TF_CFLAGS) $(TF_LFLAGS) $(INC) -O2
+else
 	$(NVCC) -std=c++11 -c -o $(BUILDDIR)/kernel_example.cu.o $(SRCDIR)/kernel_example.cu.cc \
 		$(TF_CFLAGS) $(INC) $(LIB) -x cu -Xcompiler -fPIC
+
 	$(CC) -std=c++11 -shared -o $(TARGET) $(SRCDIR)/kernel_example.cc \
 		$(BUILDDIR)/kernel_example.cu.o -fPIC $(TF_CFLAGS) $(TF_LFLAGS) \
 		$(INC) $(LIB) -O2 -lcudart
+endif
 

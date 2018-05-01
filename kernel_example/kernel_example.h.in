@@ -2,6 +2,10 @@
 #ifndef KERNEL_EXAMPLE_H_
 #define KERNEL_EXAMPLE_H_
 
+#define Tutorial_VERSION_MAJOR @Tutorial_VERSION_MAJOR@
+#define Tutorial_VERSION_MINOR @Tutorial_VERSION_MINOR@
+#cmakedefine GOOGLE_CUDA
+
 template <typename Device, typename T>
 struct ExampleFunctor {
   void operator()(const Device& d, int size, const T* in, T* out);
